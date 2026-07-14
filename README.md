@@ -10,7 +10,7 @@ middleware with no legacy baggage.
 
 Published on Packagist
 ```bash
-composer install apigopro/slim-cors-middleware
+composer require apigopro/slim-cors-middleware
 ```
 
 ## Basic usage
