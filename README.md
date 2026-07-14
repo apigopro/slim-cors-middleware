@@ -8,25 +8,9 @@ middleware with no legacy baggage.
 
 ## Install
 
-Not published on Packagist — install as a VCS repository pointing at wherever you host it:
-
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/your-org/cors-middleware.git"
-        }
-    ],
-    "require": {
-        "apigopro/slim-cors-middleware": "^1.0",
-        "slim/psr7": "^1.7"
-    }
-}
-```
-
+Published on Packagist
 ```bash
-composer update apigopro/slim-cors-middleware
+composer install apigopro/slim-cors-middleware
 ```
 
 ## Basic usage
