@@ -220,4 +220,98 @@ final class CorsMiddlewareTest extends TestCase
         $this->assertSame(403, $response->getStatusCode());
         $this->assertSame('blocked:https://evil.example.net', (string) $response->getBody());
     }
+
+    public function testPreflightWithDisallowedMethodReturns405(): void
+    {
+        $cors = new CorsMiddleware([
+            'origin' => ['https://app.example.com'],
+            'methods' => ['GET', 'POST'],
+        ]);
+
+        $preflight = (new ServerRequestFactory())
+            ->createServerRequest('OPTIONS', 'https://api.example.com/data')
+            ->withHeader('Origin', 'https://app.example.com')
+            ->withHeader('Access-Control-Request-Method', 'DELETE');
+
+        $response = $cors->process($preflight, $this->okHandler());
+
+        $this->assertSame(405, $response->getStatusCode());
+        $this->assertSame('GET, POST', $response->getHeaderLine('Allow'));
+    }
+
+    public function testPreflightWithAllowedMethodStillReturns204(): void
+    {
+        $cors = new CorsMiddleware([
+            'origin' => ['https://app.example.com'],
+            'methods' => ['GET', 'POST'],
+        ]);
+
+        $preflight = (new ServerRequestFactory())
+            ->createServerRequest('OPTIONS', 'https://api.example.com/data')
+            ->withHeader('Origin', 'https://app.example.com')
+            ->withHeader('Access-Control-Request-Method', 'POST');
+
+        $response = $cors->process($preflight, $this->okHandler());
+
+        $this->assertSame(204, $response->getStatusCode());
+    }
+
+    public function testWildcardMethodsAllowAnyRequestedMethod(): void
+    {
+        $cors = new CorsMiddleware([
+            'origin' => ['https://app.example.com'],
+            'methods' => ['*'],
+        ]);
+
+        $preflight = (new ServerRequestFactory())
+            ->createServerRequest('OPTIONS', 'https://api.example.com/data')
+            ->withHeader('Origin', 'https://app.example.com')
+            ->withHeader('Access-Control-Request-Method', 'DELETE');
+
+        $response = $cors->process($preflight, $this->okHandler());
+
+        $this->assertSame(204, $response->getStatusCode());
+    }
+
+    public function testMethodMatchingIsCaseInsensitive(): void
+    {
+        $cors = new CorsMiddleware([
+            'origin' => ['https://app.example.com'],
+            'methods' => ['get', 'post'],
+        ]);
+
+        $preflight = (new ServerRequestFactory())
+            ->createServerRequest('OPTIONS', 'https://api.example.com/data')
+            ->withHeader('Origin', 'https://app.example.com')
+            ->withHeader('Access-Control-Request-Method', 'POST');
+
+        $response = $cors->process($preflight, $this->okHandler());
+
+        $this->assertSame(204, $response->getStatusCode());
+    }
+
+    public function testCustomErrorCallbackOverridesMethodNotAllowedResponse(): void
+    {
+        $cors = new CorsMiddleware([
+            'origin' => ['https://app.example.com'],
+            'methods' => ['GET'],
+            'error' => function ($request, $response, array $arguments) {
+                if (isset($arguments['method'])) {
+                    $response->getBody()->write('method-blocked:' . $arguments['method']);
+                    return $response->withStatus(422);
+                }
+                return null;
+            },
+        ]);
+
+        $preflight = (new ServerRequestFactory())
+            ->createServerRequest('OPTIONS', 'https://api.example.com/data')
+            ->withHeader('Origin', 'https://app.example.com')
+            ->withHeader('Access-Control-Request-Method', 'PUT');
+
+        $response = $cors->process($preflight, $this->okHandler());
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertSame('method-blocked:PUT', (string) $response->getBody());
+    }
 }

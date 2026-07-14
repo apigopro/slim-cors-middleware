@@ -60,6 +60,8 @@ $app->add(new JwtAuthMiddleware([/* ... */])); // runs after CORS
   `Access-Control-Allow-Origin` (and friends) get added to the response.
 - **Preflight** (`OPTIONS` + `Access-Control-Request-Method` header present) → answered directly
   with a `204`, without calling the rest of the middleware stack or your route handler at all.
+- **Preflight requesting a method not in `methods`** → rejected with `405` and an `Allow` header
+  listing what *is* allowed (or your custom `error` response).
 - **Origin not in the allow-list** → rejected with `401` (or your custom `error` response).
 
 ## Options
@@ -67,12 +69,12 @@ $app->add(new JwtAuthMiddleware([/* ... */])); // runs after CORS
 | Option              | Default                                      | Notes |
 |----------------------|------------------------------------------------|-------|
 | `origin`             | `['*']`                                          | Allowed origins. Exact strings, or patterns with a `*` wildcard, e.g. `'https://*.example.com'`. |
-| `methods`            | `['GET', 'POST', 'PUT', 'PATCH', 'DELETE']`        | Sent as `Access-Control-Allow-Methods` on preflight responses. |
+| `methods`            | `['GET', 'POST', 'PUT', 'PATCH', 'DELETE']`        | Sent as `Access-Control-Allow-Methods` on preflight responses. A preflight requesting a method outside this list gets rejected with `405` instead. Use `['*']` to allow any method. |
 | `headers.allow`      | `[]`                                              | Sent as `Access-Control-Allow-Headers` on preflight responses. If empty, whatever the browser asked for via `Access-Control-Request-Headers` is reflected back. |
 | `headers.expose`     | `[]`                                              | Sent as `Access-Control-Expose-Headers` on actual (non-preflight) responses. |
 | `credentials`        | `false`                                           | Sends `Access-Control-Allow-Credentials: true` when enabled. Also makes a configured `origin => ['*']` reflect the actual request origin instead of a literal `*`, since browsers reject the literal wildcard combined with credentials. |
 | `cache`              | `0`                                               | Seconds for `Access-Control-Max-Age` on preflight responses. `0` omits the header. |
-| `error`              | `null`                                            | `function($request, $response, array $arguments): ?ResponseInterface`, called when the origin isn't allowed. `$arguments` has `message` and `origin`. Return a response to override the default `401`. |
+| `error`              | `null`                                            | `function($request, $response, array $arguments): ?ResponseInterface`. Called when the origin isn't allowed (`$arguments` has `message`, `origin`) or when a preflight's requested method isn't allowed (`$arguments` has `message`, `method`, `allowed_methods`). Return a response to override the default `401`/`405`. |
 | `response_factory`   | *(auto-detects `slim/psr7`)*                       | Any PSR-17 `ResponseFactoryInterface`. |
 
 ## Wildcard origin patterns
@@ -105,8 +107,10 @@ composer test
 ```
 
 Covers: pass-through for non-CORS requests, allowed/disallowed origins, wildcard origin patterns
-(including the credentials + `*` interaction), preflight short-circuiting, configured vs. reflected
-`Access-Control-Allow-Headers`, `Access-Control-Expose-Headers`, and custom `error` callbacks.
+(including the credentials + `*` interaction), preflight short-circuiting, method validation
+(`405` for disallowed methods, wildcard `*` methods, case-insensitive matching), configured vs.
+reflected `Access-Control-Allow-Headers`, `Access-Control-Expose-Headers`, and custom `error`
+callbacks for both origin and method rejections.
 
 ## License
 

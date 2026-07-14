@@ -83,6 +83,12 @@ final class CorsMiddleware implements MiddlewareInterface
 
     private function preflightResponse(ServerRequestInterface $request, string $allowedOrigin): ResponseInterface
     {
+        $requestedMethod = $request->getHeaderLine('Access-Control-Request-Method');
+
+        if (!$this->isMethodAllowed($requestedMethod)) {
+            return $this->respondWithMethodNotAllowed($request, $requestedMethod);
+        }
+
         $response = $this->withCorsHeaders($this->responseFactory->createResponse(204), $allowedOrigin);
 
         $response = $response->withHeader(
@@ -107,6 +113,37 @@ final class CorsMiddleware implements MiddlewareInterface
         }
 
         return $response;
+    }
+
+    private function isMethodAllowed(string $method): bool
+    {
+        $configured = array_map(strtoupper(...), (array) $this->options['methods']);
+
+        return in_array('*', $configured, true) || in_array(strtoupper($method), $configured, true);
+    }
+
+    private function respondWithMethodNotAllowed(ServerRequestInterface $request, string $method): ResponseInterface
+    {
+        $allowed = implode(', ', (array) $this->options['methods']);
+        $message = "Method '{$method}' is not allowed.";
+
+        $response = $this->responseFactory->createResponse(405)->withHeader('Allow', $allowed);
+
+        if (is_callable($this->options['error'])) {
+            $result = ($this->options['error'])($request, $response, [
+                'message' => $message,
+                'method' => $method,
+                'allowed_methods' => (array) $this->options['methods'],
+            ]);
+
+            if ($result instanceof ResponseInterface) {
+                return $result;
+            }
+        }
+
+        $response->getBody()->write(json_encode(['error' => $message], JSON_THROW_ON_ERROR));
+
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     private function withCorsHeaders(ResponseInterface $response, string $allowedOrigin): ResponseInterface
