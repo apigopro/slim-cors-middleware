@@ -1,5 +1,5 @@
 {
-    "name": "apigopro/cors-middleware",
+    "name": "apigopro/slim-cors-middleware",
     "description": "PSR-15 CORS middleware for Slim Framework 4, spiritual successor to tuupola/cors-middleware.",
     "keywords": ["slim", "cors", "middleware", "psr-15"],
     "license": "MIT",

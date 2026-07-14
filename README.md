@@ -1,4 +1,4 @@
-# apigopro/cors-middleware
+# apigopro/slim-cors-middleware
 
 A PSR-15 CORS middleware for **Slim Framework 4**, requiring **PHP 8.5**.
 
@@ -19,14 +19,14 @@ Not published on Packagist — install as a VCS repository pointing at wherever 
         }
     ],
     "require": {
-        "apigopro/cors-middleware": "^1.0",
+        "apigopro/slim-cors-middleware": "^1.0",
         "slim/psr7": "^1.7"
     }
 }
 ```
 
 ```bash
-composer update apigopro/cors-middleware
+composer update apigopro/slim-cors-middleware
 ```
 
 ## Basic usage
