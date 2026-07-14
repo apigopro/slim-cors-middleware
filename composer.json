@@ -1,0 +1,32 @@
+{
+    "name": "apigopro/cors-middleware",
+    "description": "PSR-15 CORS middleware for Slim Framework 4, spiritual successor to tuupola/cors-middleware.",
+    "keywords": ["slim", "cors", "middleware", "psr-15"],
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": "^8.5",
+        "psr/http-message": "^1.1 || ^2.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/http-server-handler": "^1.0"
+    },
+    "require-dev": {
+        "slim/psr7": "^1.7",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SlimCors\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SlimCors\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "phpunit tests"
+    }
+}
